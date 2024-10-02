@@ -26,10 +26,11 @@ route.get("/:id", async (req, res) => {
   }
 });
 
-// Ruta POST para crear un nuevo rol
+// Ruta POST para crear un nuevo rol con permisos
 route.post("/", async (req, res) => {
   try {
-    const newRole = await rolService.createRole(req.body);
+    const { nombre, permisos } = req.body;
+    const newRole = await rolService.createRole({ nombre, permisos });
     res.status(201).json(newRole);
   } catch (error) {
     console.error("Error creating role:", error);

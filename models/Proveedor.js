@@ -14,6 +14,7 @@ Proveedor.init(
     telefono: DataTypes.STRING,
     email: DataTypes.STRING,
     direccion: DataTypes.STRING,
+    nitci: DataTypes.STRING,
   },
   {
     sequelize,

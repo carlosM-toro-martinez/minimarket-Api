@@ -1,4 +1,5 @@
 const Lote = require("../models/Lote");
+const Producto = require("../models/Producto");
 
 class servicesLote {
   constructor() {
@@ -8,7 +9,19 @@ class servicesLote {
   // Método GET para obtener todos los lotes
   async getAllLotes() {
     try {
-      const lotes = await Lote.findAll();
+      const lotes = await Lote.findAll({
+        include: {
+          model: Producto,
+          as: "producto",
+          attributes: [
+            "nombre",
+            "codigo_barra",
+            "categoria",
+            "precio",
+            "stock",
+          ],
+        },
+      });
       return lotes;
     } catch (error) {
       console.error("Error fetching all lotes:", error);

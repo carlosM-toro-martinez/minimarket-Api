@@ -1,4 +1,7 @@
 const DetalleCompra = require("../models/DetalleCompra");
+const Lote = require("../models/Lote");
+const Producto = require("../models/Producto");
+const Proveedor = require("../models/Proveedor");
 
 class servicesDetalleCompra {
   constructor() {
@@ -16,7 +19,39 @@ class servicesDetalleCompra {
     }
   }
 
-  // Método GET para obtener un detalle de compra por id_detalle
+  async getDetallesCompraByLote(numeroLote) {
+    try {
+      const detallesCompra = await Lote.findAll({
+        where: { numero_lote: numeroLote },
+        include: [
+          {
+            model: Producto,
+            as: "producto",
+            attributes: ["nombre", "id_producto"],
+          },
+          {
+            model: DetalleCompra,
+            as: "detalleCompra",
+            include: [
+              {
+                model: Proveedor,
+                as: "proveedor",
+                attributes: ["nombre", "id_proveedor"],
+              },
+            ],
+            attributes: ["precio_unitario"],
+          },
+        ],
+        attributes: ["id_lote", "numero_lote", "fecha_caducidad", "cantidad"],
+      });
+
+      return detallesCompra;
+    } catch (error) {
+      console.error("Error fetching detalles de compra by lote:", error);
+      throw error;
+    }
+  }
+
   async getDetalleCompra(id_detalle) {
     try {
       const detalleCompra = await DetalleCompra.findByPk(id_detalle);
@@ -30,7 +65,6 @@ class servicesDetalleCompra {
     }
   }
 
-  // Método POST para crear un nuevo detalle de compra
   async createDetalleCompra(data) {
     try {
       const newDetalleCompra = await DetalleCompra.create(data);
@@ -41,7 +75,6 @@ class servicesDetalleCompra {
     }
   }
 
-  // Método PUT para actualizar un detalle de compra por id_detalle
   async updateDetalleCompra(id_detalle, data) {
     try {
       const detalleCompra = await DetalleCompra.findByPk(id_detalle);
@@ -56,7 +89,6 @@ class servicesDetalleCompra {
     }
   }
 
-  // Método DELETE para eliminar un detalle de compra por id_detalle
   async deleteDetalleCompra(id_detalle) {
     try {
       const detalleCompra = await DetalleCompra.findByPk(id_detalle);

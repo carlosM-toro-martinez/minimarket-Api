@@ -4,8 +4,47 @@ const route = express.Router();
 
 const cajaService = new CajaService();
 
-// Ruta GET para obtener todas las cajas
+route.post("/abrir", async (req, res) => {
+  try {
+    const { monto_inicial, denominaciones, id_trabajador } = req.body;
+    const nuevaCaja = await cajaService.abrirCaja(
+      monto_inicial,
+      denominaciones,
+      id_trabajador
+    );
+    res.status(201).json(nuevaCaja);
+  } catch (error) {
+    console.error("Error opening caja:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+route.post("/cerrar", async (req, res) => {
+  try {
+    const { id_caja, id_trabajador } = req.body;
+    const cajaCerrada = await cajaService.cerrarCaja(id_caja, id_trabajador);
+    res.status(200).json(cajaCerrada);
+  } catch (error) {
+    console.error("Error closing caja:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 route.get("/", async (req, res) => {
+  try {
+    const cajas = await cajaService.getLastCajaDenominacion();
+    if (cajas.length === 0) {
+      return res.json({});
+    }
+
+    res.json(cajas);
+  } catch (error) {
+    console.error("Error fetching cajas:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+route.get("/all", async (req, res) => {
   try {
     const cajas = await cajaService.getAllCajas();
     res.json(cajas);
@@ -15,7 +54,6 @@ route.get("/", async (req, res) => {
   }
 });
 
-// Ruta GET para obtener una caja por id_caja
 route.get("/:id_caja", async (req, res) => {
   try {
     const { id_caja } = req.params;
@@ -27,7 +65,6 @@ route.get("/:id_caja", async (req, res) => {
   }
 });
 
-// Ruta POST para crear una nueva caja
 route.post("/", async (req, res) => {
   try {
     const newCaja = await cajaService.createCaja(req.body);
@@ -38,7 +75,6 @@ route.post("/", async (req, res) => {
   }
 });
 
-// Ruta PUT para actualizar una caja por id_caja
 route.put("/:id_caja", async (req, res) => {
   try {
     const { id_caja } = req.params;
@@ -50,7 +86,6 @@ route.put("/:id_caja", async (req, res) => {
   }
 });
 
-// Ruta DELETE para eliminar una caja por id_caja
 route.delete("/:id_caja", async (req, res) => {
   try {
     const { id_caja } = req.params;

@@ -30,10 +30,9 @@ class servicesInventario {
     }
   }
 
-  // Método POST para crear un nuevo inventario
-  async createInventario(data) {
+  async createInventario(data, transaction = null) {
     try {
-      const newInventario = await Inventario.create(data);
+      const newInventario = await Inventario.create(data, { transaction });
       return newInventario;
     } catch (error) {
       console.error("Error creating inventario:", error);

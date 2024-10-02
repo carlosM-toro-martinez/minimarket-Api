@@ -17,6 +17,7 @@ const routesCaja = require("./routesCaja");
 const routesMovimientoCaja = require("./routesMovimientoCaja");
 const routesDenominacionCaja = require("./routesDenominacionCaja");
 const routesReporte = require("./routesReporte");
+const routesLogin = require("./routesLogin");
 
 function router(app) {
   const routes = express.Router();
@@ -39,6 +40,7 @@ function router(app) {
   routes.use("/movimiento-caja", routesMovimientoCaja);
   routes.use("/denominacion-caja", routesDenominacionCaja);
   routes.use("/reportes", routesReporte);
+  routes.use("/login", routesLogin);
 }
 
 module.exports = router;

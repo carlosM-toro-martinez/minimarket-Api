@@ -27,18 +27,59 @@ route.get("/:id_movimiento", async (req, res) => {
   }
 });
 
-// Ruta POST para crear un nuevo movimiento
+// Ruta POST para crear un movimiento de caja
 route.post("/", async (req, res) => {
   try {
-    const newMovimiento = await movimientoCajaService.createMovimiento(
-      req.body
+    const {
+      id_caja,
+      tipo_movimiento,
+      monto,
+      id_trabajador,
+      motivo,
+      denominacionesDetalles,
+      fecha_movimiento,
+    } = req.body;
+
+    if (
+      !id_caja ||
+      !tipo_movimiento ||
+      !monto ||
+      !id_trabajador ||
+      !motivo ||
+      !fecha_movimiento ||
+      !denominacionesDetalles
+    ) {
+      return res.status(400).json({ error: "Todos los campos son requeridos" });
+    }
+
+    const movimiento = await movimientoCajaService.crearMovimientoCaja(
+      id_caja,
+      tipo_movimiento,
+      monto,
+      id_trabajador,
+      motivo,
+      fecha_movimiento,
+      denominacionesDetalles
     );
-    res.status(201).json(newMovimiento);
+
+    res.status(201).json(movimiento);
   } catch (error) {
-    console.error("Error creating movimiento:", error);
+    console.error("Error creating movimiento caja:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+// // Ruta POST para crear un nuevo movimiento
+// route.post("/", async (req, res) => {
+//   try {
+//     const newMovimiento = await movimientoCajaService.createMovimiento(
+//       req.body
+//     );
+//     res.status(201).json(newMovimiento);
+//   } catch (error) {
+//     console.error("Error creating movimiento:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
 // Ruta PUT para actualizar un movimiento por id_movimiento
 route.put("/:id_movimiento", async (req, res) => {

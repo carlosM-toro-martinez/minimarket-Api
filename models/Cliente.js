@@ -11,6 +11,9 @@ Cliente.init(
       primaryKey: true,
     },
     nombre: DataTypes.STRING,
+    apellido: DataTypes.STRING,
+    codigo: DataTypes.STRING,
+    nitci: DataTypes.STRING,
     telefono: DataTypes.STRING,
     email: DataTypes.STRING,
     direccion: DataTypes.STRING,
@@ -23,7 +26,7 @@ Cliente.init(
     sequelize,
     modelName: "Cliente",
     tableName: "Cliente",
-    timestamps: false,
+    timestamps: true,
   }
 );
 

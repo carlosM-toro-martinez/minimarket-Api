@@ -27,6 +27,36 @@ route.get("/:id_venta", async (req, res) => {
   }
 });
 
+route.post("/registrar-venta", async (req, res) => {
+  try {
+    const { ventaData, id_caja, denominaciones } = req.body;
+    const resultado = await ventaService.registrarVentaYActualizar(
+      ventaData,
+      id_caja,
+      denominaciones
+    );
+
+    res.status(201).json(resultado);
+  } catch (error) {
+    console.error("Error registrando venta:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+route.post("/procesar-venta", async (req, res) => {
+  try {
+    const ventaDetalles = req.body;
+
+    // Llamamos al servicio para procesar la venta
+    const resultado = await ventaService.procesarVenta(ventaDetalles);
+
+    res.status(201).json(resultado);
+  } catch (error) {
+    console.error("Error procesando venta:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Ruta POST para crear una nueva venta
 route.post("/", async (req, res) => {
   try {

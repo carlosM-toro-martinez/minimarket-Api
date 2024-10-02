@@ -1,8 +1,154 @@
+const sequelize = require("../libs/dbConexionORM");
 const Venta = require("../models/Venta");
+const Caja = require("../models/Caja");
+const MovimientoCaja = require("../models/MovimientoCaja");
+const DenominacionCaja = require("../models/DenominacionCaja");
+const DetalleVenta = require("../models/DetalleVenta");
+const Inventario = require("../models/Inventario");
+const Producto = require("../models/Producto");
+const { Cliente } = require("../models");
 
 class servicesVenta {
   constructor() {
     this.sesion = {};
+  }
+
+  async registrarVentaYActualizar(dataVenta, id_caja, denominaciones) {
+    const transaction = await Venta.sequelize.transaction();
+
+    try {
+      const newVenta = await Venta.create(dataVenta, { transaction });
+
+      const caja = await Caja.findByPk(id_caja);
+      if (!caja) {
+        throw new Error(`Caja con ID ${id_caja} no encontrada`);
+      }
+
+      const montoVenta = parseFloat(dataVenta.total);
+      const nuevoMontoCaja = parseFloat(caja.monto_final) + montoVenta;
+
+      await caja.update({ monto_final: nuevoMontoCaja }, { transaction });
+
+      const nuevoMovimientoCaja = await MovimientoCaja.create(
+        {
+          id_caja: id_caja,
+          tipo_movimiento: "Ingreso",
+          motivo: "Venta realizada",
+          monto: montoVenta,
+          fecha_movimiento: dataVenta.fecha_venta,
+          id_trabajador: dataVenta.id_trabajador,
+        },
+        { transaction }
+      );
+
+      for (const denominacion of denominaciones) {
+        const {
+          tipo_dinero,
+          denominacion: valorDenominacion,
+          cantidad,
+        } = denominacion;
+
+        const denominacionCaja = await DenominacionCaja.findOne({
+          where: {
+            tipo_dinero: tipo_dinero,
+            denominacion: valorDenominacion,
+            id_caja: id_caja,
+          },
+        });
+
+        if (!denominacionCaja) {
+          throw new Error(
+            `Denominación de tipo ${tipo_dinero} con valor ${valorDenominacion} no encontrada en la caja ${id_caja}`
+          );
+        }
+
+        await denominacionCaja.update({ cantidad }, { transaction });
+      }
+
+      await transaction.commit();
+      return {
+        message: "Venta registrada y caja actualizada correctamente",
+        newVenta,
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async procesarVenta(ventaDetalles) {
+    console.log(ventaDetalles);
+
+    const transaction = await sequelize.transaction();
+
+    try {
+      for (const detalle of ventaDetalles) {
+        const { id_producto, id_lote, cantidad, id_venta } = detalle;
+
+        await DetalleVenta.create(
+          {
+            id_producto: id_producto,
+            id_venta: id_venta,
+            id_lote: id_lote,
+            cantidad: cantidad,
+            precio_unitario: detalle.precio,
+          },
+          { transaction }
+        );
+        console.log(id_producto, id_lote);
+
+        const inventario = await Inventario.findOne({
+          where: {
+            id_producto: id_producto,
+            id_lote: id_lote,
+          },
+        });
+        if (!inventario) {
+          throw new Error(
+            "No se encontró inventario para el producto y lote especificado."
+          );
+        }
+
+        const nuevaCantidadInventario = inventario.cantidad - cantidad;
+        if (nuevaCantidadInventario < 0) {
+          throw new Error("Cantidad de inventario insuficiente.");
+        }
+
+        await inventario.update(
+          { cantidad: nuevaCantidadInventario },
+          { transaction }
+        );
+
+        const producto = await Producto.findByPk(id_producto);
+        if (!producto) {
+          throw new Error("Producto no encontrado.");
+        }
+
+        const nuevoStock = producto.stock - cantidad;
+        if (nuevoStock < 0) {
+          throw new Error("Stock insuficiente.");
+        }
+
+        await producto.update({ stock: nuevoStock }, { transaction });
+      }
+
+      const cliente = await Cliente.findByPk(ventaDetalles[0].clienteId);
+      if (cliente) {
+        const nuevosPuntos = cliente.puntos_fidelidad + 1;
+        await cliente.update(
+          { puntos_fidelidad: nuevosPuntos },
+          { transaction }
+        );
+      }
+      await transaction.commit();
+
+      return {
+        message: "Proceso completado sin registrar la venta.",
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   // Método GET para obtener todas las ventas

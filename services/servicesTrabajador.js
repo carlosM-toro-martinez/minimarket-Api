@@ -1,4 +1,9 @@
+const sequelize = require("../libs/dbConexionORM");
 const Trabajador = require("../models/Trabajador");
+const Rol = require("../models/Rol");
+const RolPermiso = require("../models/RolPermiso");
+const Permiso = require("../models/Permiso");
+const bcrypt = require("bcryptjs");
 
 class servicesTrabajador {
   constructor() {
@@ -31,9 +36,33 @@ class servicesTrabajador {
   }
 
   // Método POST para crear un nuevo trabajador
+
   async createTrabajador(data) {
     try {
-      const newTrabajador = await Trabajador.create(data);
+      const {
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        cargo,
+        fecha_contratacion,
+        username,
+        password,
+        id_rol,
+      } = data;
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      const newTrabajador = await Trabajador.create({
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        cargo,
+        fecha_contratacion,
+        id_rol,
+        username,
+        password: hashedPassword,
+      });
+
       return newTrabajador;
     } catch (error) {
       console.error("Error creating trabajador:", error);

@@ -15,6 +15,19 @@ route.get("/", async (req, res) => {
   }
 });
 
+route.get("/:numeroLote", async (req, res) => {
+  try {
+    const { numeroLote } = req.params;
+    const detallesCompra = await detalleCompraService.getDetallesCompraByLote(
+      numeroLote
+    );
+    res.json(detallesCompra);
+  } catch (error) {
+    console.error("Error fetching detalles de compra by lote:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 // Ruta GET para obtener un detalle de compra por id_detalle
 route.get("/:id_detalle", async (req, res) => {
   try {

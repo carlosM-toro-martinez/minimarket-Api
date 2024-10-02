@@ -32,10 +32,11 @@ class servicesMovimientoInventario {
     }
   }
 
-  // Método POST para crear un nuevo movimiento de inventario
-  async createMovimientoInventario(data) {
+  async createMovimientoInventario(data, transaction = null) {
     try {
-      const newMovimiento = await MovimientoInventario.create(data);
+      const newMovimiento = await MovimientoInventario.create(data, {
+        transaction,
+      });
       return newMovimiento;
     } catch (error) {
       console.error("Error creating movimientoInventario:", error);

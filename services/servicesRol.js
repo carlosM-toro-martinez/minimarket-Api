@@ -1,4 +1,6 @@
 const Rol = require("../models/Rol");
+const RolPermiso = require("../models/RolPermiso");
+const sequelize = require("../libs/dbConexionORM");
 
 class servicesRol {
   constructor() {
@@ -32,11 +34,28 @@ class servicesRol {
 
   // Método POST para crear un nuevo rol
   async createRole(data) {
+    const transaction = await sequelize.transaction();
     try {
-      const newRole = await Rol.create(data);
+      const { nombre, permisos } = data;
+      const newRole = await Rol.create({ nombre }, { transaction });
+
+      if (permisos && permisos.length > 0) {
+        for (const permisoId of permisos) {
+          await RolPermiso.create(
+            {
+              id_rol: newRole.id_rol,
+              id_permiso: permisoId,
+            },
+            { transaction }
+          );
+        }
+      }
+
+      await transaction.commit();
       return newRole;
     } catch (error) {
-      console.error("Error creating role:", error);
+      await transaction.rollback();
+      console.error("Error creating role with permissions:", error);
       throw error;
     }
   }
