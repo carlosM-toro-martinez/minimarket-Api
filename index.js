@@ -46,7 +46,25 @@ async function createInitialData() {
       where: { nombre: permiso.nombre },
     });
   }
-  console.log("Permisos iniciales creados o encontrados");
+
+  const categorias = [
+    { nombre: "Pollo" },
+    { nombre: "Carne de Res" },
+    { nombre: "Embutidos" },
+    { nombre: "Lácteos" },
+    { nombre: "Panadería" },
+    { nombre: "Bebidas" },
+    { nombre: "Frutas" },
+    { nombre: "Verduras" },
+  ];
+
+  for (const categoria of categorias) {
+    await db.Categoria.findOrCreate({
+      where: { nombre: categoria.nombre },
+    });
+  }
+
+  console.log("Permisos y categorías iniciales creados o encontrados");
 }
 
 async function createAdminUser() {

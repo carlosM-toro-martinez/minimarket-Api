@@ -15,9 +15,17 @@ Producto.init(
       type: DataTypes.STRING,
       unique: true,
     },
-    categoria: DataTypes.STRING,
     precio: DataTypes.DECIMAL(10, 2),
+    peso: DataTypes.DECIMAL(10, 2),
+    subCantidad: DataTypes.INTEGER,
     stock: DataTypes.INTEGER,
+    id_categoria: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: "Categoria",
+        key: "id_categoria",
+      },
+    },
   },
   {
     sequelize,

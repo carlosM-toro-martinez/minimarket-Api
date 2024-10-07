@@ -19,6 +19,18 @@ const Caja = require("./Caja");
 const MovimientoCaja = require("./MovimientoCaja");
 const DenominacionCaja = require("./DenominacionCaja");
 const Reporte = require("./Reporte");
+const Categoria = require("./Categoria");
+const MetodoVenta = require("./MetodoVenta");
+
+// Asociación de Producto y MetodoVenta (Uno a Muchos)
+Producto.hasMany(MetodoVenta, {
+  foreignKey: "id_producto",
+  as: "metodosVenta",
+});
+MetodoVenta.belongsTo(Producto, {
+  foreignKey: "id_producto",
+  as: "producto",
+});
 
 // Rol - Permiso (Muchos a Muchos)
 Rol.belongsToMany(Permiso, {
@@ -135,6 +147,16 @@ Caja.hasMany(DenominacionCaja, {
   as: "denominaciones",
 });
 
+// Categoria - Producto (Uno a Muchos)
+Categoria.hasMany(Producto, {
+  foreignKey: "id_categoria",
+  as: "productos",
+});
+Producto.belongsTo(Categoria, {
+  foreignKey: "id_categoria",
+  as: "categoria",
+});
+
 module.exports = {
   sequelize,
   Rol,
@@ -155,4 +177,6 @@ module.exports = {
   MovimientoCaja,
   DenominacionCaja,
   Reporte,
+  Categoria,
+  MetodoVenta,
 };

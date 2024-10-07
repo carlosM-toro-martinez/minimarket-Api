@@ -30,9 +30,12 @@ DetalleCompra.init(
     cantidad: {
       type: DataTypes.INTEGER,
     },
+
+    subCantidad: DataTypes.INTEGER,
     precio_unitario: {
       type: DataTypes.DECIMAL(10, 2),
     },
+    peso: DataTypes.DECIMAL(10, 2),
     fecha_compra: {
       type: DataTypes.DATE,
     },

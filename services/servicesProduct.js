@@ -68,11 +68,28 @@ class servicesProducto {
       if (!product) {
         throw new Error(`Product with ID ${id} not found`);
       }
-
       const stockChange =
         data.tipo_movimiento === "compra" ? data.cantidad : -data.cantidad;
+      const pesoChange =
+        data.tipo_movimiento === "compra"
+          ? parseFloat(data.peso)
+          : -parseFloat(data.peso);
+      const subCantidadChange =
+        data.tipo_movimiento === "compra"
+          ? parseInt(data?.subCantidad)
+          : -parseInt(data?.subCantidad);
+      const currentPeso = product.peso !== null ? parseFloat(product.peso) : 0;
+      const currentSubCantidad =
+        product.subCantidad !== null ? parseInt(product.subCantidad) : 0;
       await product.update(
-        { stock: product.stock + stockChange },
+        {
+          stock: product.stock + stockChange,
+          peso: parseFloat((currentPeso + pesoChange).toFixed(2)),
+
+          subCantidad: parseFloat(
+            (currentSubCantidad + subCantidadChange).toFixed(2)
+          ),
+        },
         { transaction }
       );
 
@@ -94,6 +111,7 @@ class servicesProducto {
           id_producto: id,
           id_lote: data.id_lote,
           cantidad: data.cantidad,
+          subCantidad: data?.subCantidad,
           fecha_actualizacion: new Date(),
           id_trabajador: data.id_trabajador,
         },
@@ -149,6 +167,8 @@ class servicesProducto {
       const inventarios = product.inventarios.map((inventario) => ({
         id: inventario.id,
         cantidad: inventario.cantidad,
+        subCantidad: inventario.subCantidad,
+        peso: inventario.peso,
         fecha_caducidad: inventario.lote
           ? inventario.lote.fecha_caducidad
           : null,

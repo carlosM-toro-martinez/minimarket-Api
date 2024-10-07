@@ -53,6 +53,8 @@ route.post("/", async (req, res) => {
 // Ruta PUT para actualizar un producto por ID
 route.put("/:id", async (req, res) => {
   try {
+    console.log(req.body);
+
     const updatedProduct = await productService.updateProduct(
       req.params.id,
       req.body

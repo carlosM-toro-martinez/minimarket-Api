@@ -1,5 +1,6 @@
 const Lote = require("../models/Lote");
 const Producto = require("../models/Producto");
+const MetodoVenta = require("../models/MetodoVenta");
 
 class servicesLote {
   constructor() {
@@ -7,20 +8,34 @@ class servicesLote {
   }
 
   // Método GET para obtener todos los lotes
+
   async getAllLotes() {
     try {
       const lotes = await Lote.findAll({
-        include: {
-          model: Producto,
-          as: "producto",
-          attributes: [
-            "nombre",
-            "codigo_barra",
-            "categoria",
-            "precio",
-            "stock",
-          ],
-        },
+        include: [
+          {
+            model: Producto,
+            as: "producto",
+            attributes: [
+              "nombre",
+              "codigo_barra",
+              "precio",
+              "stock",
+              "peso",
+              "subCantidad",
+            ],
+            include: {
+              model: MetodoVenta,
+              as: "metodosVenta",
+              attributes: [
+                "id_metodo_venta",
+                "descripcion",
+                "cantidad_por_metodo",
+                "precio",
+              ],
+            },
+          },
+        ],
       });
       return lotes;
     } catch (error) {

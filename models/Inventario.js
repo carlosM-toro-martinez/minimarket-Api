@@ -30,6 +30,8 @@ Inventario.init(
     cantidad: {
       type: DataTypes.INTEGER,
     },
+    subCantidad: DataTypes.INTEGER,
+    peso: DataTypes.DECIMAL(10, 2),
     fecha_actualizacion: {
       type: DataTypes.DATE,
     },

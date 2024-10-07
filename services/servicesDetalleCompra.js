@@ -42,7 +42,14 @@ class servicesDetalleCompra {
             attributes: ["precio_unitario"],
           },
         ],
-        attributes: ["id_lote", "numero_lote", "fecha_caducidad", "cantidad"],
+        attributes: [
+          "id_lote",
+          "numero_lote",
+          "fecha_caducidad",
+          "cantidad",
+          "peso",
+          "subCantidad",
+        ],
       });
 
       return detallesCompra;

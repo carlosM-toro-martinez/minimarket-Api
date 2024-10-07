@@ -18,6 +18,8 @@ const routesMovimientoCaja = require("./routesMovimientoCaja");
 const routesDenominacionCaja = require("./routesDenominacionCaja");
 const routesReporte = require("./routesReporte");
 const routesLogin = require("./routesLogin");
+const routesCategoria = require("./routesCategoria");
+const routesMetodoVenta = require("./routesMetodoVenta");
 
 function router(app) {
   const routes = express.Router();
@@ -40,6 +42,8 @@ function router(app) {
   routes.use("/movimiento-caja", routesMovimientoCaja);
   routes.use("/denominacion-caja", routesDenominacionCaja);
   routes.use("/reportes", routesReporte);
+  routes.use("/categorias", routesCategoria);
+  routes.use("/metodo-ventas", routesMetodoVenta);
   routes.use("/login", routesLogin);
 }
 
