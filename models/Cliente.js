@@ -21,6 +21,10 @@ Cliente.init(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
+    estado: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
   },
   {
     sequelize,

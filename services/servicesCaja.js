@@ -104,7 +104,7 @@ class servicesCaja {
             monto_inicial: 0,
             monto_final: 0,
             fecha_apertura: "2024-09-26T10:00:00.000Z",
-            fecha_cierre: null,
+            fecha_cierre: "2024-09-26T10:00:00.000Z",
           },
           denominaciones: [
             { tipo_dinero: "billete", denominacion: 200, cantidad: 0 },

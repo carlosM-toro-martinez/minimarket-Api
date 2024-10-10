@@ -77,25 +77,31 @@ class servicesVenta {
   }
 
   async procesarVenta(ventaDetalles) {
-    console.log(ventaDetalles);
-
     const transaction = await sequelize.transaction();
+    console.log(ventaDetalles);
 
     try {
       for (const detalle of ventaDetalles) {
-        const { id_producto, id_lote, cantidad, id_venta } = detalle;
+        const {
+          id_producto,
+          id_lote,
+          cantidad,
+          id_venta,
+          descripcion,
+          cantidad_unidad,
+        } = detalle;
 
         await DetalleVenta.create(
           {
             id_producto: id_producto,
             id_venta: id_venta,
             id_lote: id_lote,
-            cantidad: cantidad,
+            cantidad: cantidad_unidad ? cantidad_unidad : cantidad,
+            detalle: descripcion,
             precio_unitario: detalle.precio,
           },
           { transaction }
         );
-        console.log(id_producto, id_lote);
 
         const inventario = await Inventario.findOne({
           where: {
@@ -109,13 +115,31 @@ class servicesVenta {
           );
         }
 
-        const nuevaCantidadInventario = inventario.cantidad - cantidad;
-        if (nuevaCantidadInventario < 0) {
-          throw new Error("Cantidad de inventario insuficiente.");
+        if (detalle.cantidad_unidad !== null) {
+          const nuevaCantidadUnidad =
+            inventario.subCantidad - detalle.cantidad_unidad;
+          inventario.subCantidad = nuevaCantidadUnidad;
+        } else {
+          if (detalle.peso === null) {
+            const nuevaCantidadInventario = inventario.cantidad - cantidad;
+            if (nuevaCantidadInventario < 0) {
+              throw new Error("Cantidad de inventario insuficiente.");
+            }
+            inventario.cantidad = nuevaCantidadInventario;
+          }
+        }
+
+        if (detalle.peso !== null) {
+          const nuevoPeso = inventario.peso - detalle.peso;
+          inventario.peso = nuevoPeso;
         }
 
         await inventario.update(
-          { cantidad: nuevaCantidadInventario },
+          {
+            cantidad: inventario.cantidad,
+            subCantidad: inventario.subCantidad,
+            peso: inventario.peso,
+          },
           { transaction }
         );
 
@@ -124,12 +148,33 @@ class servicesVenta {
           throw new Error("Producto no encontrado.");
         }
 
-        const nuevoStock = producto.stock - cantidad;
-        if (nuevoStock < 0) {
-          throw new Error("Stock insuficiente.");
+        if (detalle.cantidad_unidad !== null) {
+          const nuevaCantidadUnidadProduct =
+            producto.subCantidad - detalle.cantidad_unidad;
+          producto.subCantidad = nuevaCantidadUnidadProduct;
+        } else {
+          if (detalle.peso === null) {
+            const nuevaCantidadProducto = producto.stock - cantidad;
+            if (nuevaCantidadProducto < 0) {
+              throw new Error("Cantidad de producto insuficiente.");
+            }
+            producto.stock = nuevaCantidadProducto;
+          }
         }
 
-        await producto.update({ stock: nuevoStock }, { transaction });
+        if (detalle.peso !== null) {
+          const nuevoPesoProducto = producto.peso - detalle.peso;
+          producto.peso = nuevoPesoProducto;
+        }
+
+        await producto.update(
+          {
+            stock: producto.stock,
+            subCantidad: producto.subCantidad,
+            peso: producto.peso,
+          },
+          { transaction }
+        );
       }
 
       const cliente = await Cliente.findByPk(ventaDetalles[0].clienteId);

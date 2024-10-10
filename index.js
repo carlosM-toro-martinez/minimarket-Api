@@ -56,6 +56,7 @@ async function createInitialData() {
     { nombre: "Bebidas" },
     { nombre: "Frutas" },
     { nombre: "Verduras" },
+    { nombre: "golosinas" },
   ];
 
   for (const categoria of categorias) {

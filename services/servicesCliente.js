@@ -56,17 +56,17 @@ class servicesCliente {
     }
   }
 
-  // Método DELETE para eliminar un cliente por id_cliente
   async deleteCliente(id_cliente) {
     try {
       const cliente = await Cliente.findByPk(id_cliente);
       if (!cliente) {
         throw new Error(`Cliente with ID ${id_cliente} not found`);
       }
-      await cliente.destroy();
-      return { message: "Cliente deleted successfully" };
+      // Cambiar el estado a false en lugar de eliminar
+      await cliente.update({ estado: false });
+      return { message: "Cliente marked as inactive (estado: false)" };
     } catch (error) {
-      console.error("Error deleting cliente:", error);
+      console.error("Error updating cliente's estado:", error);
       throw error;
     }
   }

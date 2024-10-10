@@ -157,6 +157,76 @@ Producto.belongsTo(Categoria, {
   as: "categoria",
 });
 
+// Nuevas asociaciones
+
+// MovimientoInventario - Producto (Muchos a Uno)
+MovimientoInventario.belongsTo(Producto, {
+  foreignKey: "id_producto",
+  as: "producto",
+});
+Producto.hasMany(MovimientoInventario, {
+  foreignKey: "id_producto",
+  as: "movimientosInventario",
+});
+
+// MovimientoInventario - Trabajador (Muchos a Uno)
+MovimientoInventario.belongsTo(Trabajador, {
+  foreignKey: "id_trabajador",
+  as: "trabajadorMovimientoInventario",
+});
+Trabajador.hasMany(MovimientoInventario, {
+  foreignKey: "id_trabajador",
+  as: "movimientosInventarioRealizados",
+});
+
+// DetalleCompra - Trabajador (Muchos a Uno)
+DetalleCompra.belongsTo(Trabajador, {
+  foreignKey: "id_trabajador",
+  as: "trabajadorCompra",
+});
+Trabajador.hasMany(DetalleCompra, {
+  foreignKey: "id_trabajador",
+  as: "detallesCompraRealizados",
+});
+
+// Venta - Trabajador (Muchos a Uno)
+Venta.belongsTo(Trabajador, {
+  foreignKey: "id_trabajador",
+  as: "trabajadorVenta",
+});
+Trabajador.hasMany(Venta, {
+  foreignKey: "id_trabajador",
+  as: "ventasRealizadas",
+});
+
+// Venta - Producto (Uno a Muchos a través de DetalleVenta)
+Venta.hasMany(DetalleVenta, {
+  foreignKey: "id_venta",
+  as: "detallesVenta",
+});
+DetalleVenta.belongsTo(Venta, {
+  foreignKey: "id_venta",
+  as: "venta",
+});
+DetalleVenta.belongsTo(Producto, {
+  foreignKey: "id_producto",
+  as: "producto",
+});
+Producto.hasMany(DetalleVenta, {
+  foreignKey: "id_producto",
+  as: "detallesVenta",
+});
+
+// Cliente - Venta (Uno a Muchos)
+Cliente.hasMany(Venta, {
+  foreignKey: "id_cliente",
+  as: "ventas",
+});
+Venta.belongsTo(Cliente, {
+  foreignKey: "id_cliente",
+  as: "cliente",
+});
+
 module.exports = {
   sequelize,
   Rol,

@@ -1,73 +1,165 @@
-// services/servicesReporte.js
-const Reporte = require("../models/Reporte");
+const express = require("express");
+const { Op } = require("sequelize");
+const {
+  MovimientoInventario,
+  Producto,
+  Lote,
+  DetalleCompra,
+  MovimientoCaja,
+  Trabajador,
+  Venta,
+  Proveedor,
+  Cliente,
+  DetalleVenta,
+  Caja,
+} = require("../models");
 
 class servicesReporte {
-  constructor() {
-    this.sesion = {};
-  }
+  constructor() {}
 
-  // Método GET para obtener todos los reportes
-  async getAllReportes() {
+  async getMovimientosAlmacen(idInicio, idFin) {
     try {
-      const reportes = await Reporte.findAll();
-      return reportes;
+      const movimientos = await MovimientoInventario.findAll({
+        where: {
+          id_movimiento: {
+            [Op.between]: [idInicio, idFin],
+          },
+        },
+        include: [
+          {
+            model: Producto,
+            as: "producto",
+            attributes: ["id_producto", "nombre"],
+            include: [
+              {
+                model: Lote,
+                as: "lotes",
+                attributes: [
+                  "id_lote",
+                  "numero_lote",
+                  "cantidad",
+                  "fecha_caducidad",
+                ],
+              },
+            ],
+          },
+        ],
+      });
+      return movimientos;
     } catch (error) {
-      console.error("Error fetching all reportes:", error);
+      console.error("Error fetching movimientos de almacén:", error);
       throw error;
     }
   }
 
-  // Método GET para obtener un reporte por id_reporte
-  async getReporte(id_reporte) {
+  // Método para obtener compras según un proveedor
+  async getComprasProveedor(proveedorId) {
     try {
-      const reporte = await Reporte.findByPk(id_reporte);
-      if (!reporte) {
-        throw new Error(`Reporte with ID ${id_reporte} not found`);
-      }
-      return reporte;
+      const compras = await DetalleCompra.findAll({
+        where: { id_proveedor: proveedorId },
+        include: [
+          {
+            model: Producto,
+            as: "producto",
+            attributes: ["id_producto", "nombre"],
+            include: [
+              {
+                model: Lote,
+                as: "lotes",
+                attributes: [
+                  "id_lote",
+                  "numero_lote",
+                  "cantidad",
+                  "fecha_caducidad",
+                ],
+              },
+            ],
+          },
+          {
+            model: Proveedor,
+            as: "proveedor",
+            attributes: ["nombre"],
+          },
+        ],
+      });
+      return compras;
     } catch (error) {
-      console.error("Error fetching reporte:", error);
+      console.error("Error fetching compras por proveedor:", error);
       throw error;
     }
   }
 
-  // Método POST para crear un nuevo reporte
-  async createReporte(data) {
+  // Método para obtener movimientos de caja entre fechas
+  async getMovimientosCaja(idInicio, idFin) {
     try {
-      const newReporte = await Reporte.create(data);
-      return newReporte;
+      const cajas = await Caja.findAll({
+        where: {
+          id_caja: {
+            [Op.between]: [idInicio, idFin],
+          },
+        },
+        include: [
+          {
+            model: MovimientoCaja,
+            as: "movimientos",
+            include: [
+              {
+                model: Trabajador,
+                as: "trabajadorMovimiento",
+              },
+            ],
+          },
+          {
+            model: Trabajador,
+            as: "trabajadorCierre",
+          },
+        ],
+      });
+
+      return cajas;
     } catch (error) {
-      console.error("Error creating reporte:", error);
+      console.error("Error fetching movimientos de caja:", error);
       throw error;
     }
   }
 
-  // Método PUT para actualizar un reporte por id_reporte
-  async updateReporte(id_reporte, data) {
+  // Método para obtener todas las ventas
+  async getVentas(idInicio, idFin) {
     try {
-      const reporte = await Reporte.findByPk(id_reporte);
-      if (!reporte) {
-        throw new Error(`Reporte with ID ${id_reporte} not found`);
-      }
-      await reporte.update(data);
-      return reporte;
+      const ventas = await Venta.findAll({
+        where: {
+          id_venta: {
+            [Op.between]: [idInicio, idFin],
+          },
+        },
+        include: [
+          {
+            model: Trabajador,
+            as: "trabajadorVenta",
+            attributes: ["nombre"],
+          },
+          {
+            model: Cliente,
+            as: "cliente",
+            attributes: ["nombre", "apellido"],
+          },
+          {
+            model: DetalleVenta,
+            as: "detallesVenta",
+            include: [
+              {
+                model: Producto,
+                as: "producto",
+                attributes: ["nombre"],
+              },
+            ],
+            attributes: ["cantidad", "precio_unitario"],
+          },
+        ],
+      });
+      return ventas;
     } catch (error) {
-      console.error("Error updating reporte:", error);
-      throw error;
-    }
-  }
-
-  // Método DELETE para eliminar un reporte por id_reporte
-  async deleteReporte(id_reporte) {
-    try {
-      const reporte = await Reporte.findByPk(id_reporte);
-      if (!reporte) {
-        throw new Error(`Reporte with ID ${id_reporte} not found`);
-      }
-      await reporte.destroy();
-      return { message: "Reporte deleted successfully" };
-    } catch (error) {
-      console.error("Error deleting reporte:", error);
+      console.error("Error fetching ventas:", error);
       throw error;
     }
   }

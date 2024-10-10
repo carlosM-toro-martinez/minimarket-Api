@@ -34,6 +34,9 @@ DetalleVenta.init(
         key: "id_lote",
       },
     },
+    detalle: {
+      type: DataTypes.STRING,
+    },
     cantidad: {
       type: DataTypes.INTEGER,
     },
