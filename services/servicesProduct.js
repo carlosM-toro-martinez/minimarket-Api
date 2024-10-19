@@ -112,6 +112,7 @@ class servicesProducto {
           id_lote: data.id_lote,
           cantidad: data.cantidad,
           subCantidad: data?.subCantidad,
+          peso: parseFloat((currentPeso + pesoChange).toFixed(2)),
           fecha_actualizacion: new Date(),
           id_trabajador: data.id_trabajador,
         },

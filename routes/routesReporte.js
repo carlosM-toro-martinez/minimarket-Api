@@ -10,7 +10,7 @@ route.get("/almacenes/movimientos/:idInicio/:idFin", async (req, res) => {
   console.log(idInicio, idFin);
 
   try {
-    const movimientos = await reporteService.getMovimientosAlmacen(
+    const movimientos = await reporteService.getLotesConDetalleCompra(
       idInicio,
       idFin
     );

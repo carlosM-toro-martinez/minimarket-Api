@@ -17,72 +17,164 @@ const {
 class servicesReporte {
   constructor() {}
 
-  async getMovimientosAlmacen(idInicio, idFin) {
+  // async getLotesConDetalleCompra(idInicio, idFin) {
+  //   try {
+  //     const lotes = await Lote.findAll({
+  //       where: {
+  //         id_lote: {
+  //           [Op.between]: [idInicio, idFin],
+  //         },
+  //       },
+  //       include: [
+  //         {
+  //           model: DetalleCompra,
+  //           as: "detalleCompra",
+  //           attributes: [
+  //             "id_detalle",
+  //             "cantidad",
+  //             "precio_unitario",
+  //             "fecha_compra",
+  //           ],
+  //           include: [
+  //             {
+  //               model: Producto,
+  //               as: "producto",
+  //               attributes: ["id_producto", "nombre", "codigo_barra"],
+  //             },
+  //           ],
+  //         },
+  //       ],
+  //     });
+
+  //     return lotes;
+  //   } catch (error) {
+  //     console.error("Error fetching lotes con detalle de compra:", error);
+  //     throw error;
+  //   }
+  // }
+
+  async getLotesConDetalleCompra(idInicio, idFin) {
     try {
-      const movimientos = await MovimientoInventario.findAll({
+      // Consulta para obtener todos los lotes en el rango de ID
+      const lotes = await Lote.findAll({
         where: {
-          id_movimiento: {
+          id_lote: {
             [Op.between]: [idInicio, idFin],
           },
         },
         include: [
           {
-            model: Producto,
-            as: "producto",
-            attributes: ["id_producto", "nombre"],
+            model: DetalleCompra,
+            as: "detalleCompra",
+            attributes: [
+              "id_detalle",
+              "id_proveedor",
+              "cantidad",
+              "precio_unitario",
+              "fecha_compra",
+            ],
             include: [
               {
-                model: Lote,
-                as: "lotes",
-                attributes: [
-                  "id_lote",
-                  "numero_lote",
-                  "cantidad",
-                  "fecha_caducidad",
-                ],
+                model: Producto,
+                as: "producto",
+                attributes: ["id_producto", "nombre", "codigo_barra"],
+              },
+              {
+                model: Proveedor,
+                as: "proveedor",
+                attributes: ["id_proveedor", "nombre"],
               },
             ],
           },
         ],
       });
-      return movimientos;
+
+      // Agrupar los lotes por numero_lote
+      const lotesAgrupados = lotes.reduce((agrupados, lote) => {
+        const { numero_lote } = lote;
+        if (!agrupados[numero_lote]) {
+          agrupados[numero_lote] = [];
+        }
+        agrupados[numero_lote].push(lote);
+        return agrupados;
+      }, {});
+
+      // Convertir el objeto a un array de grupos
+      const resultado = Object.keys(lotesAgrupados).map((numeroLote) => ({
+        numero_lote: numeroLote,
+        lotes: lotesAgrupados[numeroLote].map((lote) => ({
+          id_lote: lote.id_lote,
+          fecha_ingreso: lote.fecha_ingreso,
+          fecha_caducidad: lote.fecha_caducidad,
+          cantidad: lote.cantidad,
+          detalleCompra: {
+            id_detalle: lote.detalleCompra.id_detalle,
+            id_proveedor: lote.detalleCompra.id_proveedor,
+            cantidad: lote.detalleCompra.cantidad,
+            precio_unitario: lote.detalleCompra.precio_unitario,
+            fecha_compra: lote.detalleCompra.fecha_compra,
+            producto: {
+              id_producto: lote.detalleCompra.producto.id_producto,
+              nombre: lote.detalleCompra.producto.nombre,
+              codigo_barra: lote.detalleCompra.producto.codigo_barra,
+            },
+            proveedor: {
+              id_proveedor: lote.detalleCompra.proveedor.id_proveedor,
+              nombre: lote.detalleCompra.proveedor.nombre,
+            },
+          },
+        })),
+      }));
+
+      return resultado;
     } catch (error) {
-      console.error("Error fetching movimientos de almacén:", error);
+      console.error(
+        "Error fetching lotes agrupados por numero de lote:",
+        error
+      );
       throw error;
     }
   }
 
-  // Método para obtener compras según un proveedor
-  async getComprasProveedor(proveedorId) {
+  async getComprasProveedor() {
     try {
-      const compras = await DetalleCompra.findAll({
-        where: { id_proveedor: proveedorId },
+      const proveedores = await Proveedor.findAll({
+        attributes: ["id_proveedor", "nombre"],
         include: [
           {
-            model: Producto,
-            as: "producto",
-            attributes: ["id_producto", "nombre"],
+            model: DetalleCompra,
+            as: "compras",
+            attributes: [
+              "id_detalle_compra",
+              "cantidad",
+              "precio",
+              "fecha_compra",
+            ],
             include: [
               {
-                model: Lote,
-                as: "lotes",
-                attributes: [
-                  "id_lote",
-                  "numero_lote",
-                  "cantidad",
-                  "fecha_caducidad",
+                model: Producto,
+                as: "producto",
+                attributes: ["id_producto", "nombre"],
+                include: [
+                  {
+                    model: Lote,
+                    as: "lotes",
+                    attributes: [
+                      "id_lote",
+                      "numero_lote",
+                      "cantidad",
+                      "fecha_caducidad",
+                    ],
+                  },
                 ],
               },
             ],
           },
-          {
-            model: Proveedor,
-            as: "proveedor",
-            attributes: ["nombre"],
-          },
         ],
+        order: [["id_proveedor", "ASC"]], // Ordenar por id_proveedor o como prefieras
       });
-      return compras;
+
+      return proveedores;
     } catch (error) {
       console.error("Error fetching compras por proveedor:", error);
       throw error;

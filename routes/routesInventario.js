@@ -4,10 +4,9 @@ const route = express.Router();
 
 const inventarioService = new InventarioService();
 
-// Ruta GET para obtener todos los inventarios
 route.get("/", async (req, res) => {
   try {
-    const inventarios = await inventarioService.getAllInventarios();
+    const inventarios = await inventarioService.getAllProductosConInventarios();
     res.json(inventarios);
   } catch (error) {
     console.error("Error fetching inventarios:", error);
@@ -15,7 +14,6 @@ route.get("/", async (req, res) => {
   }
 });
 
-// Ruta GET para obtener un inventario por id_inventario
 route.get("/:id_inventario", async (req, res) => {
   try {
     const { id_inventario } = req.params;
@@ -27,7 +25,6 @@ route.get("/:id_inventario", async (req, res) => {
   }
 });
 
-// Ruta POST para crear un nuevo inventario
 route.post("/", async (req, res) => {
   try {
     const newInventario = await inventarioService.createInventario(req.body);
@@ -38,7 +35,6 @@ route.post("/", async (req, res) => {
   }
 });
 
-// Ruta PUT para actualizar un inventario por id_inventario
 route.put("/:id_inventario", async (req, res) => {
   try {
     const { id_inventario } = req.params;
@@ -53,7 +49,6 @@ route.put("/:id_inventario", async (req, res) => {
   }
 });
 
-// Ruta DELETE para eliminar un inventario por id_inventario
 route.delete("/:id_inventario", async (req, res) => {
   try {
     const { id_inventario } = req.params;

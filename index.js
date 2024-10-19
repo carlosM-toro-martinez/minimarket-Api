@@ -65,6 +65,10 @@ async function createInitialData() {
     });
   }
 
+  await db.Cliente.findOrCreate({
+    where: { nombre: "default" },
+  });
+
   console.log("Permisos y categorías iniciales creados o encontrados");
 }
 

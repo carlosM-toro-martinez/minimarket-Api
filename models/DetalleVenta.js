@@ -40,6 +40,8 @@ DetalleVenta.init(
     cantidad: {
       type: DataTypes.INTEGER,
     },
+    subCantidad: DataTypes.INTEGER,
+    peso: DataTypes.DECIMAL(10, 2),
     precio_unitario: {
       type: DataTypes.DECIMAL(10, 2),
     },

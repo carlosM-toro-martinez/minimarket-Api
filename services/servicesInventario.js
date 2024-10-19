@@ -1,3 +1,4 @@
+const { Producto, Lote } = require("../models");
 const Inventario = require("../models/Inventario");
 
 class servicesInventario {
@@ -5,18 +6,51 @@ class servicesInventario {
     this.sesion = {};
   }
 
-  // Método GET para obtener todos los inventarios
-  async getAllInventarios() {
+  async getAllProductosConInventarios() {
     try {
-      const inventarios = await Inventario.findAll();
-      return inventarios;
+      const productos = await Producto.findAll({
+        attributes: ["id_producto", "nombre", "codigo_barra"],
+        include: [
+          {
+            model: Inventario,
+            as: "inventarios",
+            attributes: [
+              "id_inventario",
+              "cantidad",
+              "subCantidad",
+              "peso",
+              "fecha_actualizacion",
+              "id_trabajador",
+            ],
+            include: [
+              {
+                model: Lote,
+                as: "lote",
+                attributes: [
+                  "id_lote",
+                  "numero_lote",
+                  "fecha_ingreso",
+                  "cantidad",
+                  "subCantidad",
+                  "peso",
+                ],
+              },
+            ],
+          },
+        ],
+        order: [["id_producto", "ASC"]],
+      });
+
+      return productos;
     } catch (error) {
-      console.error("Error fetching all inventarios:", error);
+      console.error(
+        "Error fetching productos with inventarios and lotes:",
+        error
+      );
       throw error;
     }
   }
 
-  // Método GET para obtener un inventario por id_inventario
   async getInventario(id_inventario) {
     try {
       const inventario = await Inventario.findByPk(id_inventario);
@@ -40,7 +74,6 @@ class servicesInventario {
     }
   }
 
-  // Método PUT para actualizar un inventario por id_inventario
   async updateInventario(id_inventario, data) {
     try {
       const inventario = await Inventario.findByPk(id_inventario);
@@ -55,7 +88,6 @@ class servicesInventario {
     }
   }
 
-  // Método DELETE para eliminar un inventario por id_inventario
   async deleteInventario(id_inventario) {
     try {
       const inventario = await Inventario.findByPk(id_inventario);

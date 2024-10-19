@@ -89,6 +89,7 @@ class servicesVenta {
           id_venta,
           descripcion,
           cantidad_unidad,
+          peso,
         } = detalle;
 
         await DetalleVenta.create(
@@ -96,7 +97,9 @@ class servicesVenta {
             id_producto: id_producto,
             id_venta: id_venta,
             id_lote: id_lote,
-            cantidad: cantidad_unidad ? cantidad_unidad : cantidad,
+            cantidad: cantidad,
+            subCantidad: cantidad_unidad,
+            peso: peso,
             detalle: descripcion,
             precio_unitario: detalle.precio,
           },
@@ -132,6 +135,7 @@ class servicesVenta {
         if (detalle.peso !== null) {
           const nuevoPeso = inventario.peso - detalle.peso;
           inventario.peso = nuevoPeso;
+          console.log(inventario.peso);
         }
 
         await inventario.update(
