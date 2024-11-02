@@ -6,7 +6,7 @@ const DenominacionCaja = require("../models/DenominacionCaja");
 const DetalleVenta = require("../models/DetalleVenta");
 const Inventario = require("../models/Inventario");
 const Producto = require("../models/Producto");
-const { Cliente } = require("../models");
+const { Cliente, MovimientoInventario } = require("../models");
 
 class servicesVenta {
   constructor() {
@@ -193,6 +193,106 @@ class servicesVenta {
 
       return {
         message: "Proceso completado sin registrar la venta.",
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async procesarInventario(ventaDetalles) {
+    const transaction = await sequelize.transaction();
+
+    try {
+      for (const detalle of ventaDetalles) {
+        const {
+          id_producto,
+          id_lote,
+          cantidad,
+          cantidad_unidad,
+          peso,
+          id_trabajador,
+        } = detalle;
+
+        const inventario = await Inventario.findOne({
+          where: {
+            id_producto: id_producto,
+            id_lote: id_lote,
+          },
+        });
+        if (!inventario) {
+          throw new Error(
+            "No se encontró inventario para el producto y lote especificado."
+          );
+        }
+
+        if (cantidad_unidad !== null) {
+          inventario.subCantidad -= cantidad_unidad;
+        } else if (peso === null) {
+          inventario.cantidad -= cantidad;
+          if (inventario.cantidad < 0)
+            throw new Error("Cantidad de inventario insuficiente.");
+        }
+
+        if (peso !== null) {
+          inventario.peso -= peso;
+        }
+
+        await inventario.update(
+          {
+            cantidad: inventario.cantidad,
+            subCantidad: inventario.subCantidad,
+            peso: inventario.peso,
+          },
+          { transaction }
+        );
+
+        const producto = await Producto.findByPk(id_producto);
+        if (!producto) {
+          throw new Error("Producto no encontrado.");
+        }
+
+        if (cantidad_unidad !== null) {
+          producto.subCantidad -= cantidad_unidad;
+        } else if (peso === null) {
+          producto.stock -= cantidad;
+          if (producto.stock < 0)
+            throw new Error("Cantidad de producto insuficiente.");
+        }
+
+        if (peso !== null) {
+          producto.peso -= peso;
+        }
+
+        await producto.update(
+          {
+            stock: producto.stock,
+            subCantidad: producto.subCantidad,
+            peso: producto.peso,
+          },
+          { transaction }
+        );
+
+        await MovimientoInventario.create(
+          {
+            id_producto: id_producto,
+            fecha_movimiento: new Date(),
+            tipo_movimiento: "Salida sin venta",
+            cantidad: cantidad ? parseFloat(cantidad) : null,
+            subCantidad: cantidad_unidad ? parseInt(cantidad_unidad) : null,
+            peso: peso ? parseFloat(peso) : null,
+            id_trabajador: id_trabajador,
+            lote: id_lote,
+          },
+          { transaction }
+        );
+      }
+
+      await transaction.commit();
+
+      return {
+        message:
+          "Proceso completado sin registrar la venta ni actualizar el cliente.",
       };
     } catch (error) {
       await transaction.rollback();

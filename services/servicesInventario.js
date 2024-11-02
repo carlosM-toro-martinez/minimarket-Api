@@ -1,4 +1,4 @@
-const { Producto, Lote } = require("../models");
+const { Producto, Lote, MetodoVenta } = require("../models");
 const Inventario = require("../models/Inventario");
 
 class servicesInventario {
@@ -33,10 +33,45 @@ class servicesInventario {
                   "cantidad",
                   "subCantidad",
                   "peso",
+                  "cantidadPorCaja",
+                ],
+                include: [
+                  {
+                    model: Producto,
+                    as: "producto",
+                    attributes: [
+                      "nombre",
+                      "codigo_barra",
+                      "precio",
+                      "stock",
+                      "peso",
+                      "subCantidad",
+                    ],
+                    include: {
+                      model: MetodoVenta,
+                      as: "metodosVenta",
+                      attributes: [
+                        "id_metodo_venta",
+                        "descripcion",
+                        "cantidad_por_metodo",
+                        "precio",
+                      ],
+                    },
+                  },
                 ],
               },
             ],
           },
+          // {
+          //   model: MetodoVenta,
+          //   as: "metodosVenta",
+          //   attributes: [
+          //     "id_metodo_venta",
+          //     "descripcion",
+          //     "cantidad_por_metodo",
+          //     "precio",
+          //   ],
+          // },
         ],
         order: [["id_producto", "ASC"]],
       });

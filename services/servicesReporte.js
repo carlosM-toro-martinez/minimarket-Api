@@ -55,7 +55,6 @@ class servicesReporte {
 
   async getLotesConDetalleCompra(idInicio, idFin) {
     try {
-      // Consulta para obtener todos los lotes en el rango de ID
       const lotes = await Lote.findAll({
         where: {
           id_lote: {
@@ -66,13 +65,6 @@ class servicesReporte {
           {
             model: DetalleCompra,
             as: "detalleCompra",
-            attributes: [
-              "id_detalle",
-              "id_proveedor",
-              "cantidad",
-              "precio_unitario",
-              "fecha_compra",
-            ],
             include: [
               {
                 model: Producto,
@@ -88,8 +80,6 @@ class servicesReporte {
           },
         ],
       });
-
-      // Agrupar los lotes por numero_lote
       const lotesAgrupados = lotes.reduce((agrupados, lote) => {
         const { numero_lote } = lote;
         if (!agrupados[numero_lote]) {
@@ -99,7 +89,6 @@ class servicesReporte {
         return agrupados;
       }, {});
 
-      // Convertir el objeto a un array de grupos
       const resultado = Object.keys(lotesAgrupados).map((numeroLote) => ({
         numero_lote: numeroLote,
         lotes: lotesAgrupados[numeroLote].map((lote) => ({
@@ -107,6 +96,9 @@ class servicesReporte {
           fecha_ingreso: lote.fecha_ingreso,
           fecha_caducidad: lote.fecha_caducidad,
           cantidad: lote.cantidad,
+          subCantidad: lote.subCantidad,
+          peso: lote.peso,
+          cantidadPorCaja: lote.cantidadPorCaja,
           detalleCompra: {
             id_detalle: lote.detalleCompra.id_detalle,
             id_proveedor: lote.detalleCompra.id_proveedor,
@@ -171,7 +163,7 @@ class servicesReporte {
             ],
           },
         ],
-        order: [["id_proveedor", "ASC"]], // Ordenar por id_proveedor o como prefieras
+        order: [["id_proveedor", "ASC"]],
       });
 
       return proveedores;
@@ -181,7 +173,6 @@ class servicesReporte {
     }
   }
 
-  // Método para obtener movimientos de caja entre fechas
   async getMovimientosCaja(idInicio, idFin) {
     try {
       const cajas = await Caja.findAll({
