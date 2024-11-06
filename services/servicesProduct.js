@@ -62,6 +62,8 @@ class servicesProducto {
 
   async updateProduct(id, data) {
     const transaction = await sequelize.transaction();
+    console.log(data);
+    console.log(id);
 
     try {
       const product = await Producto.findByPk(id, { transaction });

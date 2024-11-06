@@ -14,6 +14,7 @@ class servicesVenta {
   }
 
   async registrarVentaYActualizar(dataVenta, id_caja, denominaciones) {
+    console.log(dataVenta);
     const transaction = await Venta.sequelize.transaction();
 
     try {
@@ -152,23 +153,16 @@ class servicesVenta {
           throw new Error("Producto no encontrado.");
         }
 
-        if (detalle.cantidad_unidad !== null) {
-          const nuevaCantidadUnidadProduct =
-            producto.subCantidad - detalle.cantidad_unidad;
-          producto.subCantidad = nuevaCantidadUnidadProduct;
-        } else {
-          if (detalle.peso === null) {
-            const nuevaCantidadProducto = producto.stock - cantidad;
-            if (nuevaCantidadProducto < 0) {
-              throw new Error("Cantidad de producto insuficiente.");
-            }
-            producto.stock = nuevaCantidadProducto;
-          }
+        if (cantidad_unidad !== null) {
+          producto.subCantidad -= cantidad_unidad;
+        } else if (peso === null) {
+          producto.stock -= cantidad;
+          if (producto.stock < 0)
+            throw new Error("Cantidad de producto insuficiente.");
         }
 
-        if (detalle.peso !== null) {
-          const nuevoPesoProducto = producto.peso - detalle.peso;
-          producto.peso = nuevoPesoProducto;
+        if (peso !== null) {
+          producto.peso -= peso;
         }
 
         await producto.update(
