@@ -82,6 +82,8 @@ class servicesVenta {
     console.log(ventaDetalles);
 
     try {
+      const productoModificaciones = {};
+
       for (const detalle of ventaDetalles) {
         const {
           id_producto,
@@ -119,25 +121,18 @@ class servicesVenta {
           );
         }
 
-        if (detalle.cantidad_unidad !== null) {
-          const nuevaCantidadUnidad =
-            inventario.subCantidad - detalle.cantidad_unidad;
-          inventario.subCantidad = nuevaCantidadUnidad;
-        } else {
-          if (detalle.peso === null) {
-            const nuevaCantidadInventario = inventario.cantidad - cantidad;
-            if (nuevaCantidadInventario < 0) {
-              throw new Error("Cantidad de inventario insuficiente.");
-            }
-            inventario.cantidad = nuevaCantidadInventario;
-          }
-        }
+        const nuevaCantidadUnidad =
+          inventario.subCantidad - (detalle.cantidad_unidad || 0);
+        inventario.subCantidad = nuevaCantidadUnidad;
 
-        if (detalle.peso !== null) {
-          const nuevoPeso = inventario.peso - detalle.peso;
-          inventario.peso = nuevoPeso;
-          console.log(inventario.peso);
+        const nuevaCantidadInventario = inventario.cantidad - (cantidad || 0);
+        if (nuevaCantidadInventario < 0) {
+          throw new Error("Cantidad de inventario insuficiente.");
         }
+        inventario.cantidad = nuevaCantidadInventario;
+
+        const nuevoPeso = inventario.peso - (detalle.peso || 0);
+        inventario.peso = nuevoPeso;
 
         await inventario.update(
           {
@@ -148,28 +143,35 @@ class servicesVenta {
           { transaction }
         );
 
-        const producto = await Producto.findByPk(id_producto);
-        if (!producto) {
-          throw new Error("Producto no encontrado.");
-        }
-
-        if (cantidad_unidad !== null) {
-          producto.subCantidad -= cantidad_unidad;
-        } else if (peso === null) {
-          producto.stock -= cantidad;
-          if (producto.stock < 0)
-            throw new Error("Cantidad de producto insuficiente.");
-        }
-
-        if (peso !== null) {
-          producto.peso -= peso;
-        }
-
-        await producto.update(
-          {
+        if (!productoModificaciones[id_producto]) {
+          const producto = await Producto.findByPk(id_producto);
+          if (!producto) {
+            throw new Error("Producto no encontrado.");
+          }
+          productoModificaciones[id_producto] = {
+            producto,
             stock: producto.stock,
             subCantidad: producto.subCantidad,
             peso: producto.peso,
+          };
+        }
+
+        productoModificaciones[id_producto].stock -= cantidad || 0;
+        productoModificaciones[id_producto].subCantidad -= cantidad_unidad || 0;
+        productoModificaciones[id_producto].peso -= peso || 0;
+      }
+
+      for (const mod of Object.values(productoModificaciones)) {
+        if (mod.stock < 0) {
+          await transaction.rollback();
+          throw new Error("Cantidad de producto insuficiente.");
+        }
+
+        await mod.producto.update(
+          {
+            stock: mod.stock,
+            subCantidad: mod.subCantidad,
+            peso: mod.peso,
           },
           { transaction }
         );
@@ -198,6 +200,8 @@ class servicesVenta {
     const transaction = await sequelize.transaction();
 
     try {
+      const productoModificaciones = {};
+
       for (const detalle of ventaDetalles) {
         const {
           id_producto,
@@ -214,23 +218,19 @@ class servicesVenta {
             id_lote: id_lote,
           },
         });
+
         if (!inventario) {
           throw new Error(
             "No se encontró inventario para el producto y lote especificado."
           );
         }
 
-        if (cantidad_unidad !== null) {
-          inventario.subCantidad -= cantidad_unidad;
-        } else if (peso === null) {
-          inventario.cantidad -= cantidad;
-          if (inventario.cantidad < 0)
-            throw new Error("Cantidad de inventario insuficiente.");
+        inventario.subCantidad -= cantidad_unidad || 0;
+        inventario.cantidad -= cantidad || 0;
+        if (inventario.cantidad < 0) {
+          throw new Error("Cantidad de inventario insuficiente.");
         }
-
-        if (peso !== null) {
-          inventario.peso -= peso;
-        }
+        inventario.peso -= peso || 0;
 
         await inventario.update(
           {
@@ -241,31 +241,22 @@ class servicesVenta {
           { transaction }
         );
 
-        const producto = await Producto.findByPk(id_producto);
-        if (!producto) {
-          throw new Error("Producto no encontrado.");
-        }
-
-        if (cantidad_unidad !== null) {
-          producto.subCantidad -= cantidad_unidad;
-        } else if (peso === null) {
-          producto.stock -= cantidad;
-          if (producto.stock < 0)
-            throw new Error("Cantidad de producto insuficiente.");
-        }
-
-        if (peso !== null) {
-          producto.peso -= peso;
-        }
-
-        await producto.update(
-          {
+        if (!productoModificaciones[id_producto]) {
+          const producto = await Producto.findByPk(id_producto);
+          if (!producto) {
+            throw new Error("Producto no encontrado.");
+          }
+          productoModificaciones[id_producto] = {
+            producto,
             stock: producto.stock,
             subCantidad: producto.subCantidad,
             peso: producto.peso,
-          },
-          { transaction }
-        );
+          };
+        }
+
+        productoModificaciones[id_producto].stock -= cantidad || 0;
+        productoModificaciones[id_producto].subCantidad -= cantidad_unidad || 0;
+        productoModificaciones[id_producto].peso -= peso || 0;
 
         await MovimientoInventario.create(
           {
@@ -277,6 +268,22 @@ class servicesVenta {
             peso: peso ? parseFloat(peso) : null,
             id_trabajador: id_trabajador,
             lote: id_lote,
+          },
+          { transaction }
+        );
+      }
+
+      for (const mod of Object.values(productoModificaciones)) {
+        if (mod.stock < 0) {
+          await transaction.rollback();
+          throw new Error("Cantidad de producto insuficiente.");
+        }
+
+        await mod.producto.update(
+          {
+            stock: mod.stock,
+            subCantidad: mod.subCantidad,
+            peso: mod.peso,
           },
           { transaction }
         );

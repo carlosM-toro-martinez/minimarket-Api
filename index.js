@@ -103,7 +103,6 @@ async function createAdminUser() {
 
 async function startServer() {
   try {
-    // Sincronizar la base de datos
     await db.sequelize.sync({ alter: true });
     console.log("Tablas sincronizadas con la base de datos");
 
