@@ -236,7 +236,6 @@ class servicesReporte {
                 attributes: ["nombre"],
               },
             ],
-            attributes: ["cantidad", "precio_unitario"],
           },
         ],
       });
