@@ -17,42 +17,6 @@ const {
 class servicesReporte {
   constructor() {}
 
-  // async getLotesConDetalleCompra(idInicio, idFin) {
-  //   try {
-  //     const lotes = await Lote.findAll({
-  //       where: {
-  //         id_lote: {
-  //           [Op.between]: [idInicio, idFin],
-  //         },
-  //       },
-  //       include: [
-  //         {
-  //           model: DetalleCompra,
-  //           as: "detalleCompra",
-  //           attributes: [
-  //             "id_detalle",
-  //             "cantidad",
-  //             "precio_unitario",
-  //             "fecha_compra",
-  //           ],
-  //           include: [
-  //             {
-  //               model: Producto,
-  //               as: "producto",
-  //               attributes: ["id_producto", "nombre", "codigo_barra"],
-  //             },
-  //           ],
-  //         },
-  //       ],
-  //     });
-
-  //     return lotes;
-  //   } catch (error) {
-  //     console.error("Error fetching lotes con detalle de compra:", error);
-  //     throw error;
-  //   }
-  // }
-
   async getLotesConDetalleCompra(idInicio, idFin) {
     try {
       const lotes = await Lote.findAll({
@@ -206,7 +170,6 @@ class servicesReporte {
     }
   }
 
-  // Método para obtener todas las ventas
   async getVentas(idInicio, idFin) {
     try {
       const ventas = await Venta.findAll({

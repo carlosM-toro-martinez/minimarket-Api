@@ -6,7 +6,9 @@ const DenominacionCaja = require("../models/DenominacionCaja");
 const DetalleVenta = require("../models/DetalleVenta");
 const Inventario = require("../models/Inventario");
 const Producto = require("../models/Producto");
-const { Cliente, MovimientoInventario } = require("../models");
+const { Cliente, MovimientoInventario, Trabajador } = require("../models");
+const { DateTime } = require("luxon");
+const { Op } = require("sequelize");
 
 class servicesVenta {
   constructor() {
@@ -301,6 +303,126 @@ class servicesVenta {
     }
   }
 
+  async anularVenta(ventaDetalles) {
+    console.log(ventaDetalles);
+
+    const transaction = await sequelize.transaction();
+
+    try {
+      const productoModificaciones = {};
+
+      for (const detalle of ventaDetalles) {
+        const {
+          id_producto,
+          id_lote,
+          cantidad,
+          id_detalle,
+          cantidad_unidad,
+          peso,
+        } = detalle;
+
+        const detalleVenta = await DetalleVenta.findByPk(id_detalle, {
+          transaction,
+        });
+        if (!detalleVenta) {
+          throw new Error(
+            `No se encontró el DetalleVenta con el ID ${id_detalle}.`
+          );
+        }
+        await detalleVenta.destroy({ transaction });
+
+        const inventario = await Inventario.findOne({
+          where: {
+            id_producto: id_producto,
+            id_lote: id_lote,
+          },
+          transaction,
+        });
+        if (!inventario) {
+          throw new Error(
+            `No se encontró inventario para el producto y lote especificado (ID Producto: ${id_producto}, ID Lote: ${id_lote}).`
+          );
+        }
+
+        inventario.subCantidad += cantidad_unidad || 0;
+        inventario.cantidad += cantidad || 0;
+        inventario.peso += peso || 0;
+
+        await inventario.update(
+          {
+            cantidad: inventario.cantidad,
+            subCantidad: inventario.subCantidad,
+            peso: inventario.peso,
+          },
+          { transaction }
+        );
+
+        if (!productoModificaciones[id_producto]) {
+          const producto = await Producto.findByPk(id_producto, {
+            transaction,
+          });
+          if (!producto) {
+            throw new Error(
+              `Producto no encontrado (ID Producto: ${id_producto}).`
+            );
+          }
+          productoModificaciones[id_producto] = {
+            producto,
+            stock: producto.stock,
+            subCantidad: producto.subCantidad,
+            peso: producto.peso,
+          };
+        }
+
+        productoModificaciones[id_producto].stock += cantidad || 0;
+        productoModificaciones[id_producto].subCantidad += cantidad_unidad || 0;
+        productoModificaciones[id_producto].peso += peso || 0;
+      }
+
+      for (const mod of Object.values(productoModificaciones)) {
+        await mod.producto.update(
+          {
+            stock: mod.stock,
+            subCantidad: mod.subCantidad,
+            peso: mod.peso,
+          },
+          { transaction }
+        );
+      }
+
+      const cliente = await Cliente.findByPk(ventaDetalles[0].clienteId, {
+        transaction,
+      });
+
+      if (cliente) {
+        const nuevosPuntos = cliente.puntos_fidelidad - 1;
+        if (nuevosPuntos < 0) {
+          throw new Error(
+            `El cliente (ID Cliente: ${cliente.id}) no puede tener puntos de fidelidad negativos.`
+          );
+        }
+        await cliente.update(
+          { puntos_fidelidad: nuevosPuntos },
+          { transaction }
+        );
+      }
+
+      await transaction.commit();
+
+      const venta = await Venta.findByPk(ventaDetalles[0].id_venta);
+      if (!venta) {
+        throw new Error(`Venta with ID ${id_venta} not found`);
+      }
+      await venta.destroy();
+      return {
+        message: "La venta fue anulada exitosamente.",
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
   // Método GET para obtener todas las ventas
   async getAllVentas() {
     try {
@@ -312,16 +434,45 @@ class servicesVenta {
     }
   }
 
-  // Método GET para obtener una venta por id_venta
-  async getVenta(id_venta) {
+  async getVentasDelDia() {
     try {
-      const venta = await Venta.findByPk(id_venta);
-      if (!venta) {
-        throw new Error(`Venta with ID ${id_venta} not found`);
-      }
-      return venta;
+      const fechaHoy = DateTime.now().setZone("America/La_Paz").startOf("day");
+      const finDia = DateTime.now().setZone("America/La_Paz").endOf("day");
+
+      const ventas = await Venta.findAll({
+        where: {
+          fecha_venta: {
+            [Op.between]: [fechaHoy.toJSDate(), finDia.toJSDate()],
+          },
+        },
+        include: [
+          {
+            model: Trabajador,
+            as: "trabajadorVenta",
+            attributes: ["nombre"],
+          },
+          {
+            model: Cliente,
+            as: "cliente",
+            attributes: ["nombre", "apellido"],
+          },
+          {
+            model: DetalleVenta,
+            as: "detallesVenta",
+            include: [
+              {
+                model: Producto,
+                as: "producto",
+                attributes: ["nombre"],
+              },
+            ],
+          },
+        ],
+      });
+
+      return ventas;
     } catch (error) {
-      console.error("Error fetching venta:", error);
+      console.error("Error fetching ventas:", error);
       throw error;
     }
   }
