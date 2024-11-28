@@ -13,6 +13,10 @@ const sequelize = new Sequelize(
 
     dialectOptions: {
       connectTimeout: 10000, // Aumenta el tiempo de espera (en milisegundos)
+      ssl: {
+        require: true, // Habilita SSL
+        rejectUnauthorized: false, // Permite la conexión sin verificar el certificado del servidor
+      }, // Aumenta el tiempo de espera (en milisegundos)
     },
   }
 );
