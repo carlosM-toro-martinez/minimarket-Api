@@ -10,6 +10,10 @@ const sequelize = new Sequelize(
     host: config.dbHost,
     dialect: "postgres",
     port: config.dbPort,
+
+    dialectOptions: {
+      connectTimeout: 10000, // Aumenta el tiempo de espera (en milisegundos)
+    },
   }
 );
 
