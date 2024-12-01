@@ -12,11 +12,11 @@ const sequelize = new Sequelize(
     port: config.dbPort,
 
     dialectOptions: {
-      connectTimeout: 10000, // Aumenta el tiempo de espera (en milisegundos)
+      connectTimeout: 10000,
       ssl: {
-        require: true, // Habilita SSL
-        rejectUnauthorized: false, // Permite la conexión sin verificar el certificado del servidor
-      }, // Aumenta el tiempo de espera (en milisegundos)
+        require: true,
+        rejectUnauthorized: false,
+      },
     },
   }
 );
