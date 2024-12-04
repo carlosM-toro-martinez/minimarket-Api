@@ -135,6 +135,8 @@ class servicesVenta {
 
         const nuevoPeso = inventario.peso - (detalle.peso || 0);
         inventario.peso = nuevoPeso;
+        console.log(nuevaCantidadUnidad);
+        console.log(nuevaCantidadInventario);
 
         await inventario.update(
           {
