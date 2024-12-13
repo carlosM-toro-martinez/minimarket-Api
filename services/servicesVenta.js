@@ -192,7 +192,7 @@ class servicesVenta {
       await transaction.commit();
 
       return {
-        message: "Proceso completado sin registrar la venta.",
+        message: "Proceso completado .",
       };
     } catch (error) {
       await transaction.rollback();
@@ -342,10 +342,15 @@ class servicesVenta {
             },
             transaction,
           });
+          console.log(inventario.peso);
+          console.log(peso);
           if (inventario) {
             inventario.subCantidad += cantidad_unidad || 0;
             inventario.cantidad += cantidad || 0;
-            inventario.peso += peso || 0;
+            inventario.peso =
+              parseFloat(inventario.peso) + (parseFloat(peso) || 0);
+            console.log(inventario.peso);
+            console.log(peso);
 
             await inventario.update(
               {
@@ -383,7 +388,9 @@ class servicesVenta {
             productoModificaciones[id_producto].stock += cantidad || 0;
             productoModificaciones[id_producto].subCantidad +=
               cantidad_unidad || 0;
-            productoModificaciones[id_producto].peso += peso || 0;
+            productoModificaciones[id_producto].peso =
+              parseFloat(productoModificaciones[id_producto].peso) +
+              (parseFloat(peso) || 0);
           }
         } catch (error) {
           console.error(
