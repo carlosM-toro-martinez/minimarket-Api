@@ -342,15 +342,10 @@ class servicesVenta {
             },
             transaction,
           });
-          console.log(inventario.peso);
-          console.log(peso);
           if (inventario) {
             inventario.subCantidad += cantidad_unidad || 0;
             inventario.cantidad += cantidad || 0;
-            inventario.peso =
-              parseFloat(inventario.peso) + (parseFloat(peso) || 0);
-            console.log(inventario.peso);
-            console.log(peso);
+            inventario.peso += peso || 0;
 
             await inventario.update(
               {
@@ -388,9 +383,7 @@ class servicesVenta {
             productoModificaciones[id_producto].stock += cantidad || 0;
             productoModificaciones[id_producto].subCantidad +=
               cantidad_unidad || 0;
-            productoModificaciones[id_producto].peso =
-              parseFloat(productoModificaciones[id_producto].peso) +
-              (parseFloat(peso) || 0);
+            productoModificaciones[id_producto].peso += peso || 0;
           }
         } catch (error) {
           console.error(
@@ -446,7 +439,25 @@ class servicesVenta {
 
       try {
         const venta = await Venta.findByPk(ventaDetalles[0].id_venta);
+
         if (venta) {
+          const caja = await Caja.findByPk(ventaDetalles[0].id_caja);
+          if (!caja) {
+            throw new Error(`Caja con ID ${id_caja} no encontrada`);
+          }
+          const montoVenta = parseFloat(venta?.dataValues?.total);
+          const nuevoMontoCaja = parseFloat(caja.monto_final) - montoVenta;
+
+          await caja.update({ monto_final: nuevoMontoCaja });
+
+          const nuevoMovimientoCaja = await MovimientoCaja.create({
+            id_caja: ventaDetalles[0].id_caja,
+            tipo_movimiento: "Salida",
+            motivo: "Venta anulada",
+            monto: montoVenta,
+            fecha_movimiento: ventaDetalles[0].fecha_venta,
+            id_trabajador: ventaDetalles[0].id_trabajador,
+          });
           await venta.destroy();
         } else {
           console.warn(
