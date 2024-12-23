@@ -1,5 +1,5 @@
 const express = require("express");
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 const {
   MovimientoInventario,
   Producto,
@@ -218,6 +218,81 @@ class servicesReporte {
       throw error;
     }
   }
+
+  async getVentasClientes() {
+    try {
+      const ventas = await Venta.findAll({
+        attributes: [
+          'id_cliente',
+          [Sequelize.fn('SUM', Sequelize.col('total')), 'total_gastado'],
+          [Sequelize.col('cliente.id_cliente'), 'cliente.id_cliente'],
+          [Sequelize.col('cliente.nombre'), 'cliente.nombre'],
+          [Sequelize.col('cliente.apellido'), 'cliente.apellido']
+        ],
+        include: [
+          {
+            model: Cliente,
+            as: 'cliente',
+            attributes: ['id_cliente', 'nombre', 'apellido', 'puntos_fidelidad', 'codigo' ],
+
+          }
+        ],
+        group: [
+          'Venta.id_cliente',
+          'cliente.id_cliente',
+          'cliente.nombre',
+          'cliente.apellido',
+          'cliente.puntos_fidelidad',
+          'cliente.codigo',
+
+        ],
+        order: [[Sequelize.literal('total_gastado'), 'DESC']]
+      });
+  
+      return ventas.map((venta) => ({
+        id_cliente: venta.id_cliente,
+        nombre: venta.cliente.nombre,
+        apellido: venta.cliente.apellido,
+        puntos_fidelidad: venta.cliente.puntos_fidelidad,
+        codigo: venta.cliente.codigo,
+        total_gastado: parseFloat(venta.dataValues.total_gastado), // Asegurar el formato numérico
+      }));
+    } catch (error) {
+      console.error("Error fetching ventas por clientes:", error);
+      throw error;
+    }
+  }
+
+  async getTopClientesPorPuntos() {
+    try {
+      const clientes = await Cliente.findAll({
+        attributes: [
+          'id_cliente',
+          'nombre',
+          'apellido',
+          'puntos_fidelidad',
+          'codigo'
+        ],
+        order: [
+          ['puntos_fidelidad', 'DESC']
+        ],
+        limit: 10
+      });
+
+      return clientes.map((cliente) => ({
+        id_cliente: cliente.id_cliente,
+        nombre: cliente.nombre,
+        apellido: cliente.apellido,
+        puntos_fidelidad: cliente.puntos_fidelidad,
+        codigo: cliente.codigo
+      }));
+    } catch (error) {
+      console.error("Error fetching top clientes por puntos de fidelidad:", error);
+      throw error;
+    }
+  }
+  
+  
 }
 
 module.exports = servicesReporte;

@@ -58,4 +58,26 @@ route.get("/ventas/:idInicio/:idFin", async (req, res) => {
   }
 });
 
+route.get("/ventas/clientes", async (req, res) => {
+
+  try {
+    const ventas = await reporteService.getVentasClientes();
+    res.json(ventas);
+  } catch (error) {
+    console.error("Error fetching ventas:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+route.get("/ventas/clientes_por_puntos", async (req, res) => {
+  try {
+    const ventas = await reporteService.getTopClientesPorPuntos();
+    res.json(ventas);
+  } catch (error) {
+    console.error("Error fetching ventas:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 module.exports = route;
