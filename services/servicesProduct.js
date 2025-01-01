@@ -97,7 +97,7 @@ class servicesProducto {
       );
 
       // Crear registro en MovimientoInventario
-      await movimientoInventarioService.createMovimientoInventario(
+      const movimiento = await movimientoInventarioService.createMovimientoInventario(
         {
           id_producto: id,
           cantidad: data.cantidad,
@@ -109,7 +109,7 @@ class servicesProducto {
       );
 
       // Crear registro en Inventario
-      await inventarioService.createInventario(
+      const inventario = await inventarioService.createInventario(
         {
           id_producto: id,
           id_lote: data.id_lote,
@@ -124,7 +124,11 @@ class servicesProducto {
 
       await transaction.commit();
 
-      return product;
+      return {
+        producto: product,
+        inventario,
+        movimiento,
+      };
     } catch (error) {
       await transaction.rollback();
       console.error("Error updating product:", error);
