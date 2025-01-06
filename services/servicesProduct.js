@@ -136,6 +136,25 @@ class servicesProducto {
     }
   }
 
+  async createDetalleCompraYLote(detalleCompraData, loteData) {
+    const transaction = await sequelize.transaction();
+    try {
+      const newDetalleCompra = await DetalleCompra.create(detalleCompraData, { transaction });
+      const id_detalle_compra = newDetalleCompra.id_detalle;
+      loteData.id_detalle_compra = id_detalle_compra;
+  
+
+      const newLote = await Lote.create(loteData, { transaction });
+
+      await transaction.commit();
+      return { newDetalleCompra, newLote };
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Error creando DetalleCompra y Lote:", error);
+      throw error;
+    }
+  }
+
   async deleteProduct(id) {
     try {
       const product = await Producto.findByPk(id);
@@ -200,6 +219,96 @@ class servicesProducto {
       throw error;
     }
   }
+
+  async createDetalleCompraYLoteAndUpdateProduct(arrayData) {
+    const transaction = await sequelize.transaction();
+  
+    try {
+      const results = [];
+  
+      for (const item of arrayData) {
+        const newDetalleCompra = await DetalleCompra.create(item.detalleCompraData, {
+          transaction,
+        });
+        const id_detalle_compra = newDetalleCompra.id_detalle;
+  
+        const loteData = { ...item.loteData, id_detalle_compra };
+        const newLote = await Lote.create(loteData, { transaction });
+  
+        const product = await Producto.findByPk(item.productId, { transaction });
+        if (!product) {
+          throw new Error(`Product with ID ${item.productId} not found`);
+        }
+  
+        const stockChange =
+          item.productUpdateData.tipo_movimiento === "compra"
+            ? item.productUpdateData.cantidad
+            : -item.productUpdateData.cantidad;
+        const pesoChange =
+          item.productUpdateData.tipo_movimiento === "compra"
+            ? parseFloat(item.productUpdateData.peso)
+            : -parseFloat(item.productUpdateData.peso);
+        const subCantidadChange =
+          item.productUpdateData.tipo_movimiento === "compra"
+            ? parseInt(item.productUpdateData.subCantidad)
+            : -parseInt(item.productUpdateData.subCantidad);
+        const currentPeso =
+          product.peso !== null ? parseFloat(product.peso) : 0;
+        const currentSubCantidad =
+          product.subCantidad !== null ? parseInt(product.subCantidad) : 0;
+  
+        await product.update(
+          {
+            stock: product.stock + stockChange,
+            peso: parseFloat((currentPeso + pesoChange).toFixed(2)),
+            subCantidad: parseFloat(
+              (currentSubCantidad + subCantidadChange).toFixed(2)
+            ),
+          },
+          { transaction }
+        );
+        const movimiento =
+          await movimientoInventarioService.createMovimientoInventario(
+            {
+              id_producto: item.productId,
+              cantidad: item.productUpdateData.cantidad,
+              tipo_movimiento: item.productUpdateData.tipo_movimiento,
+              fecha_movimiento: new Date(),
+              id_trabajador: item.productUpdateData.id_trabajador,
+            },
+            transaction
+          );
+        const inventario = await inventarioService.createInventario(
+          {
+            id_producto: item.productId,
+            id_lote: newLote.id_lote,
+            cantidad: item.productUpdateData.cantidad,
+            subCantidad: item.productUpdateData.subCantidad,
+            peso: parseFloat(item.productUpdateData.peso).toFixed(2),
+            fecha_actualizacion: new Date(),
+            id_trabajador: item.productUpdateData.id_trabajador,
+          },
+          transaction
+        );
+  
+        results.push({
+          detalleCompra: newDetalleCompra,
+          lote: newLote,
+          producto: product,
+          movimiento,
+          inventario,
+        });
+      }
+  
+      await transaction.commit();
+      return results;
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Error creando registros y actualizando producto:", error);
+      throw error;
+    }
+  }
+  
 }
 
 module.exports = servicesProducto;
