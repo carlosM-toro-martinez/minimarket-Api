@@ -97,16 +97,17 @@ class servicesProducto {
       );
 
       // Crear registro en MovimientoInventario
-      const movimiento = await movimientoInventarioService.createMovimientoInventario(
-        {
-          id_producto: id,
-          cantidad: data.cantidad,
-          tipo_movimiento: data.tipo_movimiento,
-          fecha_movimiento: new Date(),
-          id_trabajador: data.id_trabajador,
-        },
-        transaction
-      );
+      const movimiento =
+        await movimientoInventarioService.createMovimientoInventario(
+          {
+            id_producto: id,
+            cantidad: data.cantidad,
+            tipo_movimiento: data.tipo_movimiento,
+            fecha_movimiento: new Date(),
+            id_trabajador: data.id_trabajador,
+          },
+          transaction
+        );
 
       // Crear registro en Inventario
       const inventario = await inventarioService.createInventario(
@@ -139,10 +140,11 @@ class servicesProducto {
   async createDetalleCompraYLote(detalleCompraData, loteData) {
     const transaction = await sequelize.transaction();
     try {
-      const newDetalleCompra = await DetalleCompra.create(detalleCompraData, { transaction });
+      const newDetalleCompra = await DetalleCompra.create(detalleCompraData, {
+        transaction,
+      });
       const id_detalle_compra = newDetalleCompra.id_detalle;
       loteData.id_detalle_compra = id_detalle_compra;
-  
 
       const newLote = await Lote.create(loteData, { transaction });
 
@@ -207,7 +209,6 @@ class servicesProducto {
         fecha_ingreso: inventario.lote ? inventario.lote.fecha_ingreso : null,
         numero_lote: inventario.lote ? inventario.lote.numero_lote : null,
         detalleCompra: inventario.lote ? inventario.lote.detalleCompra : null,
-      
       }));
 
       return {
@@ -222,24 +223,29 @@ class servicesProducto {
 
   async createDetalleCompraYLoteAndUpdateProduct(arrayData) {
     const transaction = await sequelize.transaction();
-  
+
     try {
       const results = [];
-  
+
       for (const item of arrayData) {
-        const newDetalleCompra = await DetalleCompra.create(item.detalleCompraData, {
-          transaction,
-        });
+        const newDetalleCompra = await DetalleCompra.create(
+          item.detalleCompraData,
+          {
+            transaction,
+          }
+        );
         const id_detalle_compra = newDetalleCompra.id_detalle;
-  
+
         const loteData = { ...item.loteData, id_detalle_compra };
         const newLote = await Lote.create(loteData, { transaction });
-  
-        const product = await Producto.findByPk(item.productId, { transaction });
+
+        const product = await Producto.findByPk(item.productId, {
+          transaction,
+        });
         if (!product) {
           throw new Error(`Product with ID ${item.productId} not found`);
         }
-  
+
         const stockChange =
           item.productUpdateData.tipo_movimiento === "compra"
             ? item.productUpdateData.cantidad
@@ -256,10 +262,10 @@ class servicesProducto {
           product.peso !== null ? parseFloat(product.peso) : 0;
         const currentSubCantidad =
           product.subCantidad !== null ? parseInt(product.subCantidad) : 0;
-  
+
         await product.update(
           {
-            stock: product.stock + stockChange,
+            stock: parseInt(product.stock) + parseInt(stockChange),
             peso: parseFloat((currentPeso + pesoChange).toFixed(2)),
             subCantidad: parseFloat(
               (currentSubCantidad + subCantidadChange).toFixed(2)
@@ -290,7 +296,7 @@ class servicesProducto {
           },
           transaction
         );
-  
+
         results.push({
           detalleCompra: newDetalleCompra,
           lote: newLote,
@@ -299,7 +305,7 @@ class servicesProducto {
           inventario,
         });
       }
-  
+
       await transaction.commit();
       return results;
     } catch (error) {
@@ -308,7 +314,6 @@ class servicesProducto {
       throw error;
     }
   }
-  
 }
 
 module.exports = servicesProducto;
