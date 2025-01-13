@@ -322,6 +322,7 @@ class servicesVenta {
           cantidad_unidad,
           peso,
         } = detalle;
+console.log(id_detalle);
 
         try {
           const detalleVenta = await DetalleVenta.findByPk(id_detalle, {
@@ -343,10 +344,32 @@ class servicesVenta {
             transaction,
           });
           if (inventario) {
-            inventario.subCantidad += cantidad_unidad || 0;
-            inventario.cantidad += cantidad || 0;
-            inventario.peso += peso || 0;
-
+            const cantidadUnidadValida =
+              typeof cantidad_unidad === "number"
+                ? cantidad_unidad
+                : parseFloat(cantidad_unidad) || 0;
+            const cantidadValida =
+              typeof cantidad === "number" ? cantidad : parseFloat(cantidad) || 0;
+            const pesoValido =
+              typeof peso === "number" ? peso : parseFloat(peso) || 0;
+  
+            const subCantidadValida =
+              typeof inventario.subCantidad === "number"
+                ? inventario.subCantidad
+                : parseFloat(inventario.subCantidad) || 0;
+            const inventarioCantidadValida =
+              typeof inventario.cantidad === "number"
+                ? inventario.cantidad
+                : parseFloat(inventario.cantidad) || 0;
+            const inventarioPesoValido =
+              typeof inventario.peso === "number"
+                ? inventario.peso
+                : parseFloat(inventario.peso) || 0;
+  
+            inventario.subCantidad = subCantidadValida + cantidadUnidadValida;
+            inventario.cantidad = inventarioCantidadValida + cantidadValida;
+            inventario.peso = inventarioPesoValido + pesoValido;
+  
             await inventario.update(
               {
                 cantidad: inventario.cantidad,
@@ -379,11 +402,32 @@ class servicesVenta {
             }
           }
 
+        const cantidadUnidadValida =
+          typeof cantidad_unidad === "number"
+            ? cantidad_unidad
+            : parseFloat(cantidad_unidad) || 0;
+        const cantidadValida =
+          typeof cantidad === "number" ? cantidad : parseFloat(cantidad) || 0;
+        const pesoValido =
+          typeof peso === "number" ? peso : parseFloat(peso) || 0;
+
+        const subCantidadValida =
+          typeof productoModificaciones[id_producto].subCantidad === "number"
+            ? productoModificaciones[id_producto].subCantidad
+            : parseFloat(productoModificaciones[id_producto].subCantidad) || 0;
+        const inventarioCantidadValida =
+          typeof productoModificaciones[id_producto].stock === "number"
+            ? productoModificaciones[id_producto].stock
+            : parseFloat(productoModificaciones[id_producto].stock) || 0;
+        const inventarioPesoValido =
+          typeof productoModificaciones[id_producto].peso === "number"
+            ? productoModificaciones[id_producto].peso
+            : parseFloat(productoModificaciones[id_producto].peso) || 0;
+
           if (productoModificaciones[id_producto]) {
-            productoModificaciones[id_producto].stock += cantidad || 0;
-            productoModificaciones[id_producto].subCantidad +=
-              cantidad_unidad || 0;
-            productoModificaciones[id_producto].peso += peso || 0;
+            productoModificaciones[id_producto].stock = inventarioCantidadValida + cantidadValida;
+            productoModificaciones[id_producto].subCantidad = subCantidadValida + cantidadUnidadValida
+            productoModificaciones[id_producto].peso = inventarioPesoValido + pesoValido;
           }
         } catch (error) {
           console.error(
@@ -440,30 +484,31 @@ class servicesVenta {
       try {
         const venta = await Venta.findByPk(ventaDetalles[0].id_venta);
 
-        if (venta) {
-          const caja = await Caja.findByPk(ventaDetalles[0].id_caja);
-          if (!caja) {
-            throw new Error(`Caja con ID ${id_caja} no encontrada`);
-          }
-          const montoVenta = parseFloat(venta?.dataValues?.total);
-          const nuevoMontoCaja = parseFloat(caja.monto_final) - montoVenta;
+        // if (venta) {
+        //   const caja = await Caja.findByPk(ventaDetalles[0].id_caja);
+        //   if (!caja) {
+        //     throw new Error(`Caja con ID ${id_caja} no encontrada`);
+        //   }
+        //   const montoVenta = parseFloat(venta?.dataValues?.total);
+        //   const nuevoMontoCaja = parseFloat(caja.monto_final) - montoVenta;
 
-          await caja.update({ monto_final: nuevoMontoCaja });
+        //   await caja.update({ monto_final: nuevoMontoCaja });
 
-          const nuevoMovimientoCaja = await MovimientoCaja.create({
-            id_caja: ventaDetalles[0].id_caja,
-            tipo_movimiento: "Salida",
-            motivo: "Venta anulada",
-            monto: montoVenta,
-            fecha_movimiento: ventaDetalles[0].fecha_venta,
-            id_trabajador: ventaDetalles[0].id_trabajador,
-          });
-          await venta.destroy();
-        } else {
-          console.warn(
-            `Venta con ID ${ventaDetalles[0].id_venta} no encontrada.`
-          );
-        }
+        //   const nuevoMovimientoCaja = await MovimientoCaja.create({
+        //     id_caja: ventaDetalles[0].id_caja,
+        //     tipo_movimiento: "Salida",
+        //     motivo: "Venta anulada",
+        //     monto: montoVenta,
+        //     fecha_movimiento: ventaDetalles[0].fecha_venta,
+        //     id_trabajador: ventaDetalles[0].id_trabajador,
+        //   });
+        //   await venta.destroy();
+        // } else {
+        //   console.warn(
+        //     `Venta con ID ${ventaDetalles[0].id_venta} no encontrada.`
+        //   );
+        // }
+        
       } catch (error) {
         console.error(`Error al eliminar la venta: ${error.message}`);
       }

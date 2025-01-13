@@ -4,7 +4,7 @@ const Lote = require("../models/Lote");
 const MovimientoInventarioService = require("./servicesMovimientoInventario");
 const InventarioService = require("./servicesInventario");
 const sequelize = require("../libs/dbConexionORM");
-const { DetalleCompra } = require("../models");
+const { DetalleCompra, MovimientoInventario } = require("../models");
 
 const movimientoInventarioService = new MovimientoInventarioService();
 const inventarioService = new InventarioService();
@@ -182,7 +182,6 @@ class servicesProducto {
               {
                 model: Lote,
                 as: "lote",
-                attributes: ["fecha_caducidad", "fecha_ingreso", "numero_lote"],
                 include: [
                   {
                     model: DetalleCompra,
@@ -192,6 +191,10 @@ class servicesProducto {
               },
             ],
           },
+          {
+            model: MovimientoInventario,
+            as: "movimientosInventario",
+          }
         ],
       });
 
@@ -199,7 +202,8 @@ class servicesProducto {
         throw new Error(`Product with ID ${id} not found`);
       }
       const inventarios = product.inventarios.map((inventario) => ({
-        id: inventario.id,
+        id_inventario: inventario.id_inventario,
+        id_movimiento: product.movimientosInventario.id_movimiento,
         cantidad: inventario.cantidad,
         subCantidad: inventario.subCantidad,
         peso: inventario.peso,
@@ -208,9 +212,10 @@ class servicesProducto {
           : null,
         fecha_ingreso: inventario.lote ? inventario.lote.fecha_ingreso : null,
         numero_lote: inventario.lote ? inventario.lote.numero_lote : null,
+        id_lote: inventario.lote ? inventario.lote.id_lote : null,
         detalleCompra: inventario.lote ? inventario.lote.detalleCompra : null,
       }));
-
+      
       return {
         producto: product.nombre,
         inventarios,
@@ -281,6 +286,7 @@ class servicesProducto {
               tipo_movimiento: item.productUpdateData.tipo_movimiento,
               fecha_movimiento: new Date(),
               id_trabajador: item.productUpdateData.id_trabajador,
+              lote: newLote.id_lote
             },
             transaction
           );
